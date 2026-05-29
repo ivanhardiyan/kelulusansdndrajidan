@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengumuman Kelulusan - SDN Drajidan 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  </head>
+<body>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDeCVcT4qs4hsan1zmDq3B8gojv7KMxYAPULTwNNBusYtazFrmU4Yn0pbEAZaW6lvcew/exec';
+    let dataSiswaDitemukan = null;
+    let amplopSudahDibuka = false;
+
+    // FUNGSI UTAMA VALIDASI NISN VIA GOOGLE SHEETS
+    async function validasiNISN() {
+      const nisnInput = document.getElementById('nisnInput');
+      const nisn = nisnInput.value.trim();
+      const btn = document.getElementById('btnOpen');
+
+      if (!nisn) {
+        tampilkanNotifikasi('Silakan masukkan NISN Anda.');
+        return;
+      }
+
+      btn.textContent = "Memeriksa...";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await response.json(); 
+        
+        // Asumsi data Google Sheets: [[nama, nisn, status], [nama, nisn, status], ...]
+        // Kita cari baris yang NISN-nya cocok (index 1)
+        const siswa = data.find(row => String(row[1]) === nisn);
+
+        if (siswa) {
+          dataSiswaDitemukan = {
+            nama: siswa[0],
+            nisn: siswa[1],
+            status: siswa[2]
+          };
+          tampilkanAmplop();
+        } else {
+          tampilkanNotifikasi('NISN tidak ditemukan dalam database.');
+          goyang(nisnInput);
+        }
+      } catch (e) {
+        tampilkanNotifikasi('Gagal terhubung ke database. Coba lagi nanti.');
+      } finally {
+        btn.textContent = "🎓 Buka Amplop Pengumuman";
+        btn.disabled = false;
+      }
+    }
+
+    // FUNGSI UI (Tetap sama seperti kode lama Anda)
+    function tampilkanNotifikasi(pesan) {
+      const notif = document.getElementById('notification');
+      document.getElementById('notifText').textContent = pesan;
+      notif.classList.add('show');
+      setTimeout(() => notif.classList.remove('show'), 4000);
+    }
+
+    function goyang(elemen) {
+      elemen.classList.add('shake');
+      setTimeout(() => elemen.classList.remove('shake'), 600);
+    }
+
+    function tampilkanAmplop() {
+      document.getElementById('loginScreen').classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('envelopeScreen').classList.add('active');
+      }, 600);
+    }
+
+    function bukaAmplop() {
+      if (amplopSudahDibuka) return;
+      amplopSudahDibuka = true;
+      document.getElementById('envelope').classList.add('opened');
+      setTimeout(tampilkanHasil, 2200);
+    }
+
+    function tampilkanHasil() {
+      const siswa = dataSiswaDitemukan;
+      const lulus = String(siswa.status).toLowerCase().includes('lulus');
+      
+      // Isi data siswa dan tampilkan layar hasil (seperti kode Anda sebelumnya)
+      // ... (lanjutkan logika pengisian HTML resultScreen Anda)
+      
+      document.getElementById('envelopeScreen').style.display = 'none';
+      document.getElementById('resultScreen').classList.add('active');
+      if (lulus) picuConfetti();
+    }
+
+    function picuConfetti() {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    }
+  </script>
+</body>
+</html>
